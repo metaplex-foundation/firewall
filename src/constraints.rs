@@ -152,7 +152,7 @@ mod tests {
         let owner = Pubkey::new_unique();
         let con = Constraints::new()
             .owned_by(owner)
-            .first_byte(0);
+            .first_byte(4);
         assert_eq!(con.first_byte_must_be, Some(4));
         assert_eq!(con.owned_by, Some(owner));
     }

@@ -1,0 +1,2 @@
+#[derive(Error)]
+pub enum
