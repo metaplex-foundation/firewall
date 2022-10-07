@@ -97,6 +97,34 @@ impl<'action> Constraints<'action> {
         }
     }
 
+    pub fn rent() -> Self {
+        Constraints {
+            seeds: None,
+            program_id: None,
+            key_equals: Some(solana_program::rent::id()),
+            writable: false,
+            signer: false,
+            program: true,
+            empty: false,
+            owned_by: None,
+            first_byte_must_be: None,
+        }
+    }
+
+    pub fn address_lookup_program() -> Self {
+        Constraints {
+            seeds: None,
+            program_id: None,
+            key_equals: Some(solana_program::address_lookup_table_account::id()),
+            writable: false,
+            signer: false,
+            program: true,
+            empty: false,
+            owned_by: None,
+            first_byte_must_be: None,
+        }
+    }
+
     pub fn read_only() -> Self {
         Constraints {
             seeds: None,
