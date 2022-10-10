@@ -1,15 +1,13 @@
 use solana_program::{declare_id, msg};
 use solana_program::program_error::ProgramError;
 use {
-    crate::{error::TokenError, processor::Processor},
     solana_program::{
         account_info::AccountInfo, entrypoint, entrypoint::ProgramResult,
         program_error::PrintProgramError, pubkey::Pubkey,
     },
 };
-use firewall::AccountPlan;
-use firewall::Constraints;
-
+use saf::AccountPlan;
+use saf::Constraints;
 declare_id!("extw959P4WToez4DkuXwNsJszqGpe3HuY56AcG5yevx");
 entrypoint!(process_instruction);
 fn process_instruction(
@@ -46,11 +44,11 @@ fn simple_ix(plan: &mut AccountPlan, ix_data: &[u8]) -> ProgramResult {
     )?;
     plan.system_program()?;
 
-    subject.initialize_account(10, &payer)?;
+    subject.initialize_account(10, &crate::id(),&payer)?;
 
     Ok(())
 }
-
+/// Example of an optional Account
 fn optional_account_ix(plan: &mut AccountPlan, ix_data: &[u8]) -> ProgramResult {
     let payer = plan.required_account("payer", Constraints::payer())?;
     plan.system_program()?;
@@ -60,7 +58,7 @@ fn optional_account_ix(plan: &mut AccountPlan, ix_data: &[u8]) -> ProgramResult 
     )?;
 
     if let Some(mut subject) = subject {
-        subject.initialize_account(10, &payer)?;
+        subject.initialize_account(10, &crate::id(),&payer)?;
     } else {
         msg!("Nothing to do");
     }

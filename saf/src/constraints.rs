@@ -1,3 +1,4 @@
+use solana_address_lookup_table_program;
 use solana_program::pubkey::Pubkey;
 
 #[derive(Default)]
@@ -101,7 +102,7 @@ impl<'action> Constraints<'action> {
         Constraints {
             seeds: None,
             program_id: None,
-            key_equals: Some(solana_program::rent::id()),
+            key_equals: Some(solana_program::sysvar::rent::id()),
             writable: false,
             signer: false,
             program: true,
@@ -115,7 +116,7 @@ impl<'action> Constraints<'action> {
         Constraints {
             seeds: None,
             program_id: None,
-            key_equals: Some(solana_program::address_lookup_table_account::id()),
+            key_equals: Some(solana_address_lookup_table_program::id()),
             writable: false,
             signer: false,
             program: true,

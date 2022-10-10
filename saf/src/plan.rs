@@ -5,14 +5,13 @@ use crate::account_info::AccountInfoContext;
 
 use crate::{AccountsError, Constraints};
 
-pub struct AccountPlan<'entry, 'action> {
+pub struct AccountPlan<'entry> {
     acct_iter: &'entry mut dyn Iterator<Item=AccountInfo<'entry>>,
     required_accounts: usize,
     curr: usize
 }
 
-impl<'entry, 'action> AccountPlan<'entry, 'action> {
-
+impl<'entry> AccountPlan<'entry> {
     /// Create a new AccountPlan
     pub fn new(accounts_iter: &'entry mut dyn Iterator<Item=AccountInfo<'entry>>, required_size: usize) -> Self {
         AccountPlan {
@@ -23,18 +22,21 @@ impl<'entry, 'action> AccountPlan<'entry, 'action> {
     }
 
     /// Add a required account to the plan with the given constraints. This auto unwraps the account for convenience.
-    pub fn required_account(&mut self, name: &'static str, constraints: Constraints<'action>) -> Result<AccountInfoContext, AccountsError> {
-        self.prepare_account(name, constraints).and_then(|s| s.ok_or(AccountsError::RequiredAccountMissing))
+    pub fn required_account<'action>(&mut self, name: &'static str, constraints: Constraints<'action>) -> Result<AccountInfoContext<'entry, 'action>, AccountsError> {
+        self.prepare_account(name, constraints)
+            .and_then(|s|
+                s.ok_or(AccountsError::RequiredAccountMissing)
+            )
     }
 
     /// Alias of [`prepare_account`](AccountPlan::prepare_account) for convenience.
-    pub fn optional_account(&mut self, name: &'static str, constraints: Constraints<'action>) -> Result<Option<AccountInfoContext>, AccountsError> {
+    pub fn optional_account<'action>(&mut self, name: &'static str, constraints: Constraints<'action>) -> Result<Option<AccountInfoContext<'entry, 'action>>, AccountsError> {
         self.prepare_account(name, constraints)
     }
 
     /// Add an account to the plan with the given constraints. This method consumes one item in the accounts iterator and wraps it with the context.
     /// Before returning the constraints are validated.
-    pub fn prepare_account(&mut self, name: &'static str, constraints: Constraints<'action>) -> Result<
+    pub fn prepare_account<'action>(&mut self, name: &'static str, constraints: Constraints<'action>) -> Result<
         Option<AccountInfoContext<'entry, 'action>>,
         AccountsError
     > {
@@ -63,7 +65,7 @@ impl<'entry, 'action> AccountPlan<'entry, 'action> {
 }
 
 //TODO -> Macroize this
-impl<'entry, 'action> AccountPlan<'entry, 'action> {
+impl<'entry> AccountPlan<'entry> {
     /// Convenience method for adding a system program
     pub fn system_program<'action>(&mut self) -> Result<Option<AccountInfoContext<'entry, 'action>>, AccountsError> {
         self.prepare_account("system_program", Constraints::system_program())
@@ -79,3 +81,4 @@ impl<'entry, 'action> AccountPlan<'entry, 'action> {
         self.prepare_account("lookup", Constraints::address_lookup_program())
     }
 }
+

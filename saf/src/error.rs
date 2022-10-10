@@ -6,4 +6,6 @@ pub enum AccountsError {
     RequiredAccountMissing,
     #[error("Keys are expected to be equal")]
     KeyMismatch,
+    #[error("Validation Error: {0}")]
+    ValidationError(String)
 }

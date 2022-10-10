@@ -1,10 +1,13 @@
 use std::cell::RefMut;
 use solana_program::account_info::AccountInfo;
+use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
+use solana_program::program_error::ProgramError;
+use solana_program::pubkey::Pubkey;
 use solana_program::rent::Rent;
 use solana_program::system_instruction;
 use solana_program::sysvar::Sysvar;
-use crate::Constraints;
+use crate::{AccountsError, Constraints};
 
 pub struct AccountInfoContext<'entry, 'action> {
     pub name: &'static str,
@@ -21,12 +24,13 @@ impl<'entry, 'action> AccountInfoContext<'entry, 'action> {
 
     pub fn initialize_account(&mut self,
                               initial_size: u64,
+                              owner: &Pubkey,
                               payer: &AccountInfoContext<'entry, 'action>,
-    ) -> Result<(), DigitalAssetProtocolError> {
+    ) -> Result<(), ProgramError> {
         let rent = Rent::get()?;
         let lamports = rent.minimum_balance(initial_size as usize);
         invoke_signed(
-            &system_instruction::create_account(payer.info.key, self.info.key, lamports, initial_size, &crate::id()),
+            &system_instruction::create_account(payer.info.key, self.info.key, lamports, initial_size, owner),
             &[payer.info.clone(), self.info.clone()],
             &[&[self.constraints.seeds.unwrap(), &[&[self.bump.unwrap()]]].concat()],
         )?;

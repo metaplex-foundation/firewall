@@ -1,26 +1,27 @@
 use crate::account_info::AccountInfoContext;
-use crate::utils::assert_key_equal;
+use crate::AccountsError;
+use crate::utils::{assert_key_equal, derive};
 
 pub trait AccountConstraints {
-    fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError>;
+    fn validate_constraint(&mut self) -> Result<(), AccountsError>;
 }
 
 impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action> {
-    fn validate_constraint(&mut self) -> Result<(), DigitalAssetProtocolError> {
+    fn validate_constraint(&mut self) -> Result<(), AccountsError> {
         if self.constraints.program && !self.info.executable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a program", self.info.key)));
+            return Err(AccountsError::ValidationError(format!("Account with key {} needs to be a program", self.info.key)));
         }
 
         if !self.constraints.program && self.info.executable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a program", self.info.key)));
+            return Err(AccountsError::ValidationError(format!("Account with key {} can't be a program", self.info.key)));
         }
 
         if self.constraints.writable && !self.info.is_writable {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be writable", self.info.key)));
+            return Err(AccountsError::ValidationError(format!("Account with key {} needs to be writable", self.info.key)));
         }
         // May need to change this to support optional signers
         if self.constraints.signer && !self.info.is_signer {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} needs to be a signer", self.info.key)));
+            return Err(AccountsError::ValidationError(format!("Account with key {} needs to be a signer", self.info.key)));
         }
 
         if let Some(ob) = self.constraints.owned_by {
@@ -28,7 +29,7 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
         }
 
         if self.constraints.empty && self.info.data_len() > 0 && self.info.lamports() > 0 {
-            return Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} can't be a signer", self.info.key)));
+            return Err(AccountsError::ValidationError(format!("Account with key {} can't be a signer", self.info.key)));
         }
 
         if let Some(kef) = self.constraints.key_equals {
@@ -43,7 +44,7 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
                 Ok(())
             }
             (None, None) => Ok(()),
-            _ => Err(DigitalAssetProtocolError::InterfaceError(format!("Account with key {} has incorrect seeds", self.info.key)))
+            _ => Err(AccountsError::ValidationError(format!("Account with key {} has incorrect seeds", self.info.key)))
         }?;
         Ok(())
     }

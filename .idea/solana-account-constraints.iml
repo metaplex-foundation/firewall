@@ -2,11 +2,11 @@
 <module type="CPP_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/firewall/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/test-program/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/saf/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/test-program/target" />
-      <excludeFolder url="file://$MODULE_DIR$/firewall/target" />
+      <excludeFolder url="file://$MODULE_DIR$/saf/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
