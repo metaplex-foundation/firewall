@@ -1,6 +1,7 @@
 use crate::account_constraints::AccountConstraints;
 use crate::account_info::AccountInfoContext;
 use solana_program::account_info::AccountInfo;
+use solana_program::msg;
 use solana_program::program_error::ProgramError;
 
 use crate::{AccountsError, Constraints};
@@ -10,6 +11,8 @@ pub struct AccountPlan<'entry> {
     accounts: &'entry [AccountInfo<'entry>],
     required_accounts: usize,
     curr: usize,
+    errors: Vec<ProgramError>,
+    fast_fail: bool,
 }
 
 impl<'entry> AccountPlan<'entry> {
@@ -17,6 +20,7 @@ impl<'entry> AccountPlan<'entry> {
     pub fn new(
         accounts: &'entry [AccountInfo<'entry>],
         required_size: usize,
+        fast_fail: bool,
     ) -> Result<Self, ProgramError> {
         if accounts.len() < required_size {
             return Err(AccountsError::OutOfAccounts.into());
@@ -25,6 +29,8 @@ impl<'entry> AccountPlan<'entry> {
             accounts,
             required_accounts: required_size,
             curr: 0,
+            errors: vec![],
+            fast_fail,
         })
     }
 
@@ -54,8 +60,10 @@ impl<'entry> AccountPlan<'entry> {
         name: &'static str,
         constraints: Constraints<'action>,
     ) -> Result<Option<AccountInfoContext<'entry, 'action>>, ProgramError> {
-        let fail = self.curr >= self.required_accounts;
-        if let Some(a) = self.accounts.get(self.curr) {
+        let fail = self.curr <= self.required_accounts;
+        let item = self.accounts.get(self.curr);
+        self.curr += 1;
+        if let Some(a) = item {
             let mut accx = AccountInfoContext {
                 name,
                 info: a.clone(), // TODO -> There is a way to avoid this
@@ -63,14 +71,36 @@ impl<'entry> AccountPlan<'entry> {
                 constraints,
             };
             let res: Result<(), ProgramError> = accx.validate_constraint().map_err(|e| e.into());
-            res?;
-            return Ok(Some(accx));
+            return match (res, self.fast_fail) {
+                (Err(e), true) => Err(e),
+                (Err(e), false) => {
+                    self.errors.push(e);
+                    Ok(None)
+                }
+                _ => Ok(Some(accx)),
+            };
         }
-        self.curr += 1;
         if fail {
             Err(AccountsError::OutOfAccounts.into())
         } else {
             Ok(None)
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), ProgramError> {
+        if self.fast_fail {
+            Ok(())
+        } else {
+            if self.errors.is_empty() {
+                Ok(())
+            } else {
+                let msg = self.errors.iter().fold(String::new(), |mut acc, e| {
+                    acc.push_str(&e.to_string());
+                    acc
+                });
+                msg!("Errors: {}", msg);
+                Err(AccountsError::ValidationError(msg).into())
+            }
         }
     }
 

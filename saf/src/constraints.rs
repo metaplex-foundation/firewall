@@ -170,7 +170,7 @@ impl<'action> Constraints<'action> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
     use crate::Constraints;
     use solana_program::pubkey::Pubkey;
 
