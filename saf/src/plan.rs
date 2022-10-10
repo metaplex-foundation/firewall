@@ -1,24 +1,30 @@
+use std::collections::HashMap;
 use std::iter::Peekable;
+use std::slice::{Iter, IterMut};
 use solana_program::account_info::AccountInfo;
 use crate::account_constraints::AccountConstraints;
 use crate::account_info::AccountInfoContext;
 
 use crate::{AccountsError, Constraints};
 
+// TODO IMPL Iter
 pub struct AccountPlan<'entry> {
-    acct_iter: &'entry mut dyn Iterator<Item=AccountInfo<'entry>>,
+    accounts: &'entry [AccountInfo<'entry>],
     required_accounts: usize,
-    curr: usize
+    curr: usize,
 }
 
 impl<'entry> AccountPlan<'entry> {
     /// Create a new AccountPlan
-    pub fn new(accounts_iter: &'entry mut dyn Iterator<Item=AccountInfo<'entry>>, required_size: usize) -> Self {
-        AccountPlan {
-            acct_iter: accounts_iter,
+    pub fn new(accounts: &'entry [AccountInfo<'entry>], required_size: usize) -> Result<Self, AccountsError> {
+        if accounts.len() < required_size {
+            return Err(AccountsError::OutOfAccounts);
+        }
+        Ok(AccountPlan {
+            accounts,
             required_accounts: required_size,
             curr: 0,
-        }
+        })
     }
 
     /// Add a required account to the plan with the given constraints. This auto unwraps the account for convenience.
@@ -41,17 +47,17 @@ impl<'entry> AccountPlan<'entry> {
         AccountsError
     > {
         let fail = self.curr >= self.required_accounts;
-        self.curr += 1;
-        if let Some(a) = self.acct_iter.next() {
+        if let Some(a) = self.accounts.get(self.curr) {
             let mut accx = AccountInfoContext {
                 name,
-                info: &a,
+                info: a.clone(), // TODO -> There is a way to avoid this
                 bump: None,
                 constraints,
             };
             accx.validate_constraint()?;
             return Ok(Some(accx));
         }
+        self.curr += 1;
         if fail {
             Err(AccountsError::OutOfAccounts)
         } else {
@@ -60,7 +66,7 @@ impl<'entry> AccountPlan<'entry> {
     }
 
     pub fn accounts_length(&self) -> usize {
-        self.acct_iter.peekable().count()
+        self.accounts.len()
     }
 }
 

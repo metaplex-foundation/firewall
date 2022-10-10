@@ -1,4 +1,5 @@
-#[derive(Error)]
+use thiserror::Error;
+#[derive(Error, Debug)]
 pub enum AccountsError {
     #[error("There is no account here")]
     OutOfAccounts,

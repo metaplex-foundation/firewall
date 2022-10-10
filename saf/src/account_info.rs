@@ -1,4 +1,6 @@
-use std::cell::RefMut;
+use std::borrow::BorrowMut;
+use std::cell::{Ref, RefCell, RefMut};
+use std::rc::Rc;
 use solana_program::account_info::AccountInfo;
 use solana_program::entrypoint::ProgramResult;
 use solana_program::program::invoke_signed;
@@ -11,18 +13,19 @@ use crate::{AccountsError, Constraints};
 
 pub struct AccountInfoContext<'entry, 'action> {
     pub name: &'static str,
-    pub info: &'entry AccountInfo<'entry>,
+    pub info: AccountInfo<'entry>,
     pub bump: Option<u8>,
     pub constraints: Constraints<'action>,
 }
 
 
 impl<'entry, 'action> AccountInfoContext<'entry, 'action> {
-    pub fn mut_data(&mut self) -> RefMut<'entry, &'entry mut [u8]> {
-        self.info.data.borrow_mut()
+    pub fn mut_data(&'entry mut self) -> &'entry mut Rc<RefCell<&'entry mut [u8]>> {
+        let info = self.info.borrow_mut();
+        info.data.borrow_mut()
     }
 
-    pub fn initialize_account(&mut self,
+    pub fn initialize_account(mut self,
                               initial_size: u64,
                               owner: &Pubkey,
                               payer: &AccountInfoContext<'entry, 'action>,
