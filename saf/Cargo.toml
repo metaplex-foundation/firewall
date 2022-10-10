@@ -9,3 +9,4 @@ edition = "2021"
 solana-program = ">=1.10.39"
 solana-address-lookup-table-program = ">=1.10.39"
 thiserror = "1.0.37"
+saf-macros = { path = "../saf-macros" }

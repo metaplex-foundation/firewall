@@ -1,6 +1,6 @@
-use solana_program::pubkey::{Pubkey, PUBKEY_BYTES};
-use solana_program::program_memory::sol_memcmp;
 use crate::error::AccountsError;
+use solana_program::program_memory::sol_memcmp;
+use solana_program::pubkey::{Pubkey, PUBKEY_BYTES};
 
 /// Checks Pubkeys for equality, uses a faster memcmp from solana
 pub fn assert_key_equal(a: &Pubkey, b: &Pubkey) -> Result<(), AccountsError> {
@@ -11,11 +11,14 @@ pub fn assert_key_equal(a: &Pubkey, b: &Pubkey) -> Result<(), AccountsError> {
 }
 
 /// Checks key equality and returns a custom error
-pub fn assert_key_equal_with_error(a: &Pubkey, b: &Pubkey, err: AccountsError) -> Result<(), AccountsError> {
+pub fn assert_key_equal_with_error(
+    a: &Pubkey,
+    b: &Pubkey,
+    err: AccountsError,
+) -> Result<(), AccountsError> {
     assert_key_equal(a, b).map_err(|_| err)
 }
 
 pub fn derive(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
     Pubkey::find_program_address(seeds, program_id)
 }
-

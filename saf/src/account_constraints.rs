@@ -1,6 +1,6 @@
 use crate::account_info::AccountInfoContext;
-use crate::AccountsError;
 use crate::utils::{assert_key_equal, derive};
+use crate::AccountsError;
 
 pub trait AccountConstraints {
     fn validate_constraint(&mut self) -> Result<(), AccountsError>;
@@ -9,19 +9,31 @@ pub trait AccountConstraints {
 impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action> {
     fn validate_constraint(&mut self) -> Result<(), AccountsError> {
         if self.constraints.program && !self.info.executable {
-            return Err(AccountsError::ValidationError(format!("Account with key {} needs to be a program", self.info.key)));
+            return Err(AccountsError::ValidationError(format!(
+                "Account with key {} needs to be a program",
+                self.info.key
+            )));
         }
 
         if !self.constraints.program && self.info.executable {
-            return Err(AccountsError::ValidationError(format!("Account with key {} can't be a program", self.info.key)));
+            return Err(AccountsError::ValidationError(format!(
+                "Account with key {} can't be a program",
+                self.info.key
+            )));
         }
 
         if self.constraints.writable && !self.info.is_writable {
-            return Err(AccountsError::ValidationError(format!("Account with key {} needs to be writable", self.info.key)));
+            return Err(AccountsError::ValidationError(format!(
+                "Account with key {} needs to be writable",
+                self.info.key
+            )));
         }
         // May need to change this to support optional signers
         if self.constraints.signer && !self.info.is_signer {
-            return Err(AccountsError::ValidationError(format!("Account with key {} needs to be a signer", self.info.key)));
+            return Err(AccountsError::ValidationError(format!(
+                "Account with key {} needs to be a signer",
+                self.info.key
+            )));
         }
 
         if let Some(ob) = self.constraints.owned_by {
@@ -29,7 +41,10 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
         }
 
         if self.constraints.empty && self.info.data_len() > 0 && self.info.lamports() > 0 {
-            return Err(AccountsError::ValidationError(format!("Account with key {} can't be a signer", self.info.key)));
+            return Err(AccountsError::ValidationError(format!(
+                "Account with key {} can't be a signer",
+                self.info.key
+            )));
         }
 
         if let Some(kef) = self.constraints.key_equals {
@@ -44,7 +59,10 @@ impl<'entry, 'action> AccountConstraints for AccountInfoContext<'entry, 'action>
                 Ok(())
             }
             (None, None) => Ok(()),
-            _ => Err(AccountsError::ValidationError(format!("Account with key {} has incorrect seeds", self.info.key)))
+            _ => Err(AccountsError::ValidationError(format!(
+                "Account with key {} has incorrect seeds",
+                self.info.key
+            ))),
         }?;
         Ok(())
     }

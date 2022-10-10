@@ -1,5 +1,7 @@
+use saf_macros::*;
 use thiserror::Error;
-#[derive(Error, Debug)]
+
+#[derive(Error, Debug, ProgramErrorCode)]
 pub enum AccountsError {
     #[error("There is no account here")]
     OutOfAccounts,
@@ -8,5 +10,5 @@ pub enum AccountsError {
     #[error("Keys are expected to be equal")]
     KeyMismatch,
     #[error("Validation Error: {0}")]
-    ValidationError(String)
+    ValidationError(String),
 }

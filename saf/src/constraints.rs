@@ -64,7 +64,6 @@ impl<'action> Constraints<'action> {
         self
     }
 
-
     pub fn pda(
         seeds: &'action [&'action [u8]],
         program_id: Pubkey,
@@ -154,7 +153,6 @@ impl<'action> Constraints<'action> {
         }
     }
 
-
     pub fn payer() -> Self {
         Constraints {
             seeds: None,
@@ -172,19 +170,16 @@ impl<'action> Constraints<'action> {
 
 #[cfg(test)]
 mod tests {
-    use solana_program::pubkey::Pubkey;
-    use crate::Constraints;
     use super::*;
+    use crate::Constraints;
+    use solana_program::pubkey::Pubkey;
 
     #[test]
     fn setup_works() {
         let owner = Pubkey::new_unique();
-        let con = Constraints::new()
-            .owned_by(owner)
-            .first_byte(4);
+        let mut conn = Constraints::new();
+        let con = conn.owned_by(owner).first_byte(4);
         assert_eq!(con.first_byte_must_be, Some(4));
         assert_eq!(con.owned_by, Some(owner));
     }
 }
-
-
