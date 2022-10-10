@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "saf",
+    "saf-macros",
+    "test-program"
+]
