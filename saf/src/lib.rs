@@ -3,7 +3,7 @@ mod account_info;
 mod constraints;
 mod error;
 mod plan;
-mod utils;
+mod utils;  
 
 pub use account_constraints::*;
 use account_info::AccountInfoContext;
@@ -11,11 +11,18 @@ pub use constraints::*;
 pub use error::*;
 pub use plan::*;
 use solana_program::{account_info::AccountInfo, pubkey::Pubkey};
+use solana_program::{example_mocks::solana_sdk::transaction::Transaction, instruction::Instruction};
 
-pub struct AccountIndex(u8);
+pub enum AccountIndex{
+    Index(u8),
+    None
+}
 
-pub trait Instruction: InstructionData + ToAccounts {
+pub trait ToInstruction: InstructionData + ToAccounts {
+    type Variant;
     fn discriminator() -> &'static u16;
+
+    fn to_instruction(variant: self::Variant) -> Instruction;
 }
 
 pub trait InstructionData: Sized {
@@ -41,7 +48,7 @@ impl Processor {
         program_id: &Pubkey,
         accounts: &[AccountInfo],
         instruction_data: &[u8],
-        handlers: Vec<impl Instruction>,
+        handlers: Vec<impl ToInstruction>,
     ) -> Result<(), AccountsError> {
         let ix = &instruction_data[0..2];
         let ix = u16::from_le_bytes([ix[0], ix[1]]);
@@ -51,6 +58,10 @@ impl Processor {
 
 #[cfg(test)]
 mod tests {
+    
+
+    use solana_program::instruction::AccountMeta;
+
     use super::*;
 
     #[derive(Debug, Clone)]
@@ -60,7 +71,15 @@ mod tests {
         SFT,
     }
 
-    pub struct Mint {}
+    pub struct Mint {
+        owner: AccountMeta,
+        metadata: AccountMeta,
+        mint: AccountMeta,
+        update_authority: AccountMeta,
+        uri: String,
+        name: String,
+        token_standard: TokenStandard,
+    }
     // #[derive(MsgPackData, Accounts)]  // #[derive(BorshData, Accounts)]
     pub enum MintArgs {
         V1 {
@@ -68,6 +87,18 @@ mod tests {
             metadata: AccountIndex,
             mint: AccountIndex,
             update_authority: AccountIndex,
+            uri: String,
+            name: String,
+            token_standard: TokenStandard,
+        },
+    }
+
+    pub enum MintArgsBuilder {
+        V1 {
+            owner: Pubkey,
+            metadata: Pubkey,
+            mint: Pubkey,
+            update_authority: Pubkey,
             uri: String,
             name: String,
             token_standard: TokenStandard,
@@ -87,15 +118,42 @@ mod tests {
         token_standard: TokenStandard,
     }
 
-    impl Instruction for MintArgs {
+    impl ToInstruction for MintArgs::V1 {
+        type Variant = MintArgs<'a>;
         fn discriminator() -> &'static u16 {
             &0x0001
         }
+
+        fn to_instruction(&self) -> Instruction {
+            let mut data = vec![];
+            data.extend_from_slice(&Self::discriminator().to_le_bytes());
+            data.extend_from_slice(&self.data());
+            Instruction {
+                program_id: Pubkey::default(),
+                accounts: vec![
+
+
+                ],
+                data,
+            }
+        }
+
     }
 
     impl<'a> ToAccounts for MintArgs {
         type AccountPlan = MintV1Accounts<'a>;
        
+
+        fn to_account_list(&self, accounts: &'a [AccountInfo]) -> Self::AccountPlan {
+            let ctx = AccountInfoContext::new(accounts);
+            MintV1Accounts {
+                owner: ctx.get_account(self.owner),
+                metadata: ctx.get_account(self.metadata),
+                mint: ctx.get_account(self.mint),
+                update_authority: ctx.get_account(self.update_authority),
+            }
+        }
+
         fn to_account_plan(&self, accounts: &'a [AccountInfo]) -> Self::AccountPlan {
             match self {
                 MintArgs::V1 {
@@ -162,5 +220,16 @@ mod tests {
                 token_standard,
             })
         }
+    }
+
+
+    #[tokio::test]
+    fn test() {
+    
+        let ins = 
+        let tx = Transaction::new_with_payer(
+            &[],
+            Some(&Pubkey::new_unique()),
+        );
     }
 }
